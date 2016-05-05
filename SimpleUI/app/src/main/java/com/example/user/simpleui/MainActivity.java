@@ -18,6 +18,11 @@ import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 
@@ -52,6 +57,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.d("debug", "Main Activity OnCreate");
+
+        ParseObject testObject = new ParseObject("HomeworkParse");
+        testObject.put("name", "周慧姿");
+        testObject.put("email", "nicolechou65@gmail.com");
+        testObject.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null)
+                {
+                    Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+                }
+                else
+                {
+                    Toast.makeText(MainActivity.this, "save success", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
         textView = (TextView)findViewById(R.id.textView);
         editText = (EditText)findViewById(R.id.editText);
         radioGroup = (RadioGroup)findViewById(R.id.radioGroup);
@@ -125,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
 
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -133,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 //String text = spinner.getSelectedItem().toString();
                 //editor.putString("spinner", text);
                 int pos = (int) spinner.getSelectedItemId();
-                editor.putInt("spinner",position);
+                editor.putInt("spinner", position);
                 editor.apply();
             }
 
@@ -145,7 +168,9 @@ public class MainActivity extends AppCompatActivity {
 
         setupListView();
         setupSpinner();
-        spinner.setSelection(sp.getInt("spinner",0));
+        spinner.setSelection(sp.getInt("spinner", 0));
+
+
 
     }
 
