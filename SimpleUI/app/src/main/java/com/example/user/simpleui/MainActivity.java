@@ -191,17 +191,23 @@ public class MainActivity extends AppCompatActivity {
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    void setupListView() {
-//        RealmResults results = realm.allObjects(Order.class);
-//
-//        OrderAdapter adapter = new OrderAdapter(this, results.subList(0, results.size()));
-//        listView.setAdapter(adapter);
+    void setupListView()
+    {
         ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Order");
         query.findInBackground(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> objects, ParseException e) {
+                //當網路斷線時，顯示手機端的值
                 if (e != null) {
                     Toast.makeText(MainActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+
+                    Realm realm = Realm.getDefaultInstance();
+                    RealmResults results = realm.allObjects(Order.class);
+
+                    OrderAdapter adapter = new OrderAdapter(MainActivity.this, results.subList(0, results.size()));
+                    listView.setAdapter(adapter);
+
+                    realm.close();
                     return;
                 }
                 List<Order> orders = new ArrayList<Order>();
@@ -247,11 +253,10 @@ public class MainActivity extends AppCompatActivity {
             public void done(ParseException e) {
                 if (e != null) {
                     Toast.makeText(MainActivity.this, "Save Fail", Toast.LENGTH_LONG).toString();
-                }
 
+                }
                 editText.setText("");
                 menuResults = "";
-
                 setupListView();
             }
         });
