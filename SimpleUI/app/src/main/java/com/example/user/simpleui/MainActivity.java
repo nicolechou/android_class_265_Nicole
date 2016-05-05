@@ -3,6 +3,7 @@ package com.example.user.simpleui;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,11 +21,18 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.parse.FindCallback;
+import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.SaveCallback;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
@@ -51,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences.Editor editor;
 
     Realm realm;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,29 +71,29 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Log.d("debug", "Main Activity OnCreate");
 
-        ParseObject testObject = new ParseObject("HomeworkParse");
-        testObject.put("name", "周慧姿");
-        testObject.put("email", "nicolechou65@gmail.com");
-        testObject.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e != null)
-                {
-                    Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
-                }
-                else
-                {
-                    Toast.makeText(MainActivity.this, "save success", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        //ParseObject testObject = new ParseObject("HomeworkParse");
+        //testObject.put("name", "周慧姿");
+        //testObject.put("email", "nicolechou65@gmail.com");
+        //testObject.saveInBackground(new SaveCallback() {
+        //    @Override
+        //    public void done(ParseException e) {
+        //        if (e != null)
+        //        {
+        //            Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+        //        }
+        //        else
+        //        {
+        //            Toast.makeText(MainActivity.this, "save success", Toast.LENGTH_LONG).show();
+        //        }
+        //    }
+        //});
 
-        textView = (TextView)findViewById(R.id.textView);
-        editText = (EditText)findViewById(R.id.editText);
-        radioGroup = (RadioGroup)findViewById(R.id.radioGroup);
-        checkBox = (CheckBox)findViewById(R.id.hideCheckBox);
-        listView = (ListView)findViewById(R.id.listView);
-        spinner = (Spinner)findViewById(R.id.spinner);
+        textView = (TextView) findViewById(R.id.textView);
+        editText = (EditText) findViewById(R.id.editText);
+        radioGroup = (RadioGroup) findViewById(R.id.radioGroup);
+        checkBox = (CheckBox) findViewById(R.id.hideCheckBox);
+        listView = (ListView) findViewById(R.id.listView);
+        spinner = (Spinner) findViewById(R.id.spinner);
         orders = new ArrayList<>();
 
 
@@ -89,8 +102,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Create a RealmConfiguration which is to locate Realm file in package's "files" directory.
         RealmConfiguration realmConfig = new RealmConfiguration.Builder(this).deleteRealmIfMigrationNeeded().build();
+        Realm.setDefaultConfiguration(realmConfig);
+
         // Get a Realm instance for this thread
-        realm = Realm.getInstance(realmConfig);
+        //realm = Realm.getInstance(realmConfig);
+        realm = Realm.getDefaultInstance();
 
         editText.setText(sp.getString("editText", ""));
 
@@ -147,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
 
@@ -171,27 +186,47 @@ public class MainActivity extends AppCompatActivity {
         spinner.setSelection(sp.getInt("spinner", 0));
 
 
-
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    void setupListView()
-    {
-        RealmResults results = realm.allObjects(Order.class);
+    void setupListView() {
+//        RealmResults results = realm.allObjects(Order.class);
+//
+//        OrderAdapter adapter = new OrderAdapter(this, results.subList(0, results.size()));
+//        listView.setAdapter(adapter);
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Order");
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if (e != null) {
+                    Toast.makeText(MainActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                List<Order> orders = new ArrayList<Order>();
 
-        OrderAdapter adapter = new OrderAdapter(this, results.subList(0, results.size()));
-        listView.setAdapter(adapter);
+                for (int i = 0; i < objects.size(); i++) {
+                    Order order = new Order();
+                    order.setNote(objects.get(i).getString("note"));
+                    order.setStoreInfo(objects.get(i).getString("storeInfo"));
+                    order.setMenuResults(objects.get(i).getString("menuResults"));
+                    orders.add(order);
+                }
+                OrderAdapter adapter = new OrderAdapter(MainActivity.this, orders);
+                listView.setAdapter(adapter);
+            }
+        });
     }
 
-    void  setupSpinner()
-    {
+    void setupSpinner() {
         String[] data = getResources().getStringArray(R.array.storeInfo);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, data);
 
         spinner.setAdapter(adapter);
     }
 
-    public void click(View view)
-    {
+    public void click(View view) {
         note = editText.getText().toString();
         String text = note;
         textView.setText(text);
@@ -199,21 +234,50 @@ public class MainActivity extends AppCompatActivity {
         Order order = new Order();
         order.setMenuResults(menuResults);
         order.setNote(note);
-        order.setStoreInfo((String)spinner.getSelectedItem());
+        order.setStoreInfo((String) spinner.getSelectedItem());
 
         // Persist your data easily
-        realm.beginTransaction();
-        realm.copyToRealm(order);
-        realm.commitTransaction();
+        //realm.beginTransaction();
+       // realm.copyToRealm(order);
+       // realm.commitTransaction();
 
-        editText.setText("");
-        menuResults = "";
+        //SaveCallbackWithRealm callbackWithRealm  = new SaveCallbackWithRealm(order, new SaveCallback())
+        SaveCallbackWithRealm CallbackWithRealm = new SaveCallbackWithRealm(order, new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Toast.makeText(MainActivity.this, "Save Fail", Toast.LENGTH_LONG).toString();
+                }
 
-        setupListView();
+                editText.setText("");
+                menuResults = "";
+
+                setupListView();
+            }
+        });
+
+        order.saveToRemote(CallbackWithRealm);
+
+        //傳送至server
+//        //order.saveToRemote(new SaveCallback() {
+//            @Override
+//
+//
+////                //建立realm連線
+////                Realm realm = Realm.getDefaultInstance();
+////
+////
+////                //中斷realm連線
+////                realm.close();
+//
+//                setupListView();
+//            }
+//        });
+
+
     }
 
-    public void goToMenu(View view)
-    {
+    public void goToMenu(View view) {
         Intent intent = new Intent();
 
         intent.setClass(this, DrinkMenuActivity.class);
@@ -224,10 +288,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_MENU_ACTIVITY)
-        {
-            if(resultCode == RESULT_OK)
-            {
+        if (requestCode == REQUEST_CODE_MENU_ACTIVITY) {
+            if (resultCode == RESULT_OK) {
                 menuResults = data.getStringExtra("result");
 
             }
@@ -237,7 +299,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
         Log.d("debug", "Main Activity OnStart");
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.example.user.simpleui/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
     }
 
     @Override
@@ -255,12 +333,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.example.user.simpleui/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
         Log.d("debug", "Main Activity OnStop");
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.disconnect();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        realm.close();
         Log.d("debug", "Main Activity OnDestroy");
     }
 
