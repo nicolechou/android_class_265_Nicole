@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -52,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
     Spinner spinner;
     int def;
+    ProgressBar progressBar;
 
     String menuResults = "";
 
@@ -94,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         checkBox = (CheckBox) findViewById(R.id.hideCheckBox);
         listView = (ListView) findViewById(R.id.listView);
         spinner = (Spinner) findViewById(R.id.spinner);
+        progressBar = (ProgressBar)findViewById(R.id.progressBar);
         orders = new ArrayList<>();
 
 
@@ -193,6 +196,8 @@ public class MainActivity extends AppCompatActivity {
 
     void setupListView()
     {
+        progressBar.setVisibility(View.VISIBLE);
+
         //Realm realm = Realm.getDefaultInstance();
         final RealmResults results = realm.allObjects(Order.class);
 
@@ -206,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
                 //當網路斷線時，顯示手機端的值
                 if (e != null) {
                     Toast.makeText(MainActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
                     return;
                 }
                 List<Order> orders = new ArrayList<Order>();
@@ -228,6 +234,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 realm.close();
+                progressBar.setVisibility(View.GONE);
 
                 OrderAdapter adapter = new OrderAdapter(MainActivity.this, orders);
                 listView.setAdapter(adapter);
