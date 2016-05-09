@@ -193,6 +193,12 @@ public class MainActivity extends AppCompatActivity {
 
     void setupListView()
     {
+        //Realm realm = Realm.getDefaultInstance();
+        final RealmResults results = realm.allObjects(Order.class);
+
+        OrderAdapter adapter = new OrderAdapter(MainActivity.this, results.subList(0, results.size()));
+        listView.setAdapter(adapter);
+
         ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Order");
         query.findInBackground(new FindCallback<ParseObject>() {
             @Override
@@ -200,17 +206,11 @@ public class MainActivity extends AppCompatActivity {
                 //當網路斷線時，顯示手機端的值
                 if (e != null) {
                     Toast.makeText(MainActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-
-                    Realm realm = Realm.getDefaultInstance();
-                    RealmResults results = realm.allObjects(Order.class);
-
-                    OrderAdapter adapter = new OrderAdapter(MainActivity.this, results.subList(0, results.size()));
-                    listView.setAdapter(adapter);
-
-                    realm.close();
                     return;
                 }
                 List<Order> orders = new ArrayList<Order>();
+
+                Realm realm = Realm.getDefaultInstance();
 
                 for (int i = 0; i < objects.size(); i++) {
                     Order order = new Order();
@@ -218,7 +218,17 @@ public class MainActivity extends AppCompatActivity {
                     order.setStoreInfo(objects.get(i).getString("storeInfo"));
                     order.setMenuResults(objects.get(i).getString("menuResults"));
                     orders.add(order);
+
+                    if(results.size() <= i)
+                    {
+                        realm.beginTransaction();
+                        realm.copyToRealm(order);
+                        realm.commitTransaction();
+                    }
                 }
+
+                realm.close();
+
                 OrderAdapter adapter = new OrderAdapter(MainActivity.this, orders);
                 listView.setAdapter(adapter);
             }
