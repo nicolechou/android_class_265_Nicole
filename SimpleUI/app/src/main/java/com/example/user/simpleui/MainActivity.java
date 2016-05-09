@@ -20,6 +20,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -51,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_MENU_ACTIVITY = 0;
     private static final int REQUEST_CODE_CAMERA_ACTIVITY = 1;
+
+    private  boolean hasPhoto = false;
 
     TextView textView;
     EditText editText;
@@ -167,7 +170,19 @@ public class MainActivity extends AppCompatActivity {
 //                drinkName = radioButton.getText().toString();
 //            }
 //        });
-
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                {
+                    photoImageView.setVisibility(View.GONE);
+                }
+                else
+                {
+                    photoImageView.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -206,8 +221,7 @@ public class MainActivity extends AppCompatActivity {
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    void setupListView()
-    {
+    void setupListView() {
         progressBar.setVisibility(View.VISIBLE);
 
         //Realm realm = Realm.getDefaultInstance();
@@ -271,6 +285,21 @@ public class MainActivity extends AppCompatActivity {
         order.setNote(note);
         order.setStoreInfo((String) spinner.getSelectedItem());
 
+        if (hasPhoto)
+        {
+            Uri uri = Utils.getPhotoURI();
+            byte[] photo = Utils.uriToBytes(this, uri);
+
+            if (photo == null)
+            {
+                Log.d("Debug","Read Photo Fail");
+            }
+            else
+            {
+                order.photo = photo;
+            }
+        }
+
         // Persist your data easily
         //realm.beginTransaction();
        // realm.copyToRealm(order);
@@ -286,11 +315,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 editText.setText("");
                 menuResults = "";
+                photoImageView.setImageResource(0);
+                hasPhoto = false;
                 setupListView();
             }
         });
 
         order.saveToRemote(CallbackWithRealm);
+
 
         //傳送至server
 //        //order.saveToRemote(new SaveCallback() {
@@ -311,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
 
     public void goToMenu(View view) {
         Intent intent = new Intent();
@@ -370,6 +403,7 @@ public class MainActivity extends AppCompatActivity {
         {
             if (resultCode == RESULT_OK){
                 photoImageView.setImageURI(Utils.getPhotoURI());
+                hasPhoto = true;
             }
         }
     }
