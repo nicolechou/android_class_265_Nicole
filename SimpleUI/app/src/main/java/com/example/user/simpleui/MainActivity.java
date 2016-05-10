@@ -34,6 +34,7 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.parse.FindCallback;
+import com.parse.GetCallback;
 import com.parse.Parse;
 import com.parse.ParseException;
 
@@ -43,6 +44,8 @@ import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
 import android.Manifest;
 
 import io.realm.Realm;
@@ -243,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 List<Order> orders = new ArrayList<Order>();
 
+
                 Realm realm = Realm.getDefaultInstance();
 
                 for (int i = 0; i < objects.size(); i++) {
@@ -270,10 +274,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void setupSpinner() {
-        String[] data = getResources().getStringArray(R.array.storeInfo);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, data);
+        final Spinner storeName = (Spinner) findViewById(R.id.spinner);
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("StoreInfo");
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> list, ParseException e) {
+                if (e == null) {
+                    ArrayList<String> nameList = new ArrayList<>();
+                    for(ParseObject object : list) {
+                        nameList.add(object.getString("name"));
+                    }
+                    ArrayAdapter adapter = new ArrayAdapter(
+                            getApplicationContext(),android.R.layout.simple_list_item_1 ,nameList);
+                    storeName.setAdapter(adapter);
+                } else {
 
-        spinner.setAdapter(adapter);
+                }
+            }
+
+        });
+
+//        String[] data = getResources().getStringArray(query.get(Objects.toString("name")));
+//        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, data);
+//        spinner.setAdapter(adapter);
     }
 
     public void click(View view) {

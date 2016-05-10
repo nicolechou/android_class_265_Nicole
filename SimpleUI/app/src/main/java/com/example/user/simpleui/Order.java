@@ -9,7 +9,8 @@ import io.realm.RealmObject;
 /**
  * Created by user on 2016/4/25.
  */
-public class Order extends RealmObject{
+public class
+Order extends RealmObject{
     private String note;
     private String menuResults;
     private String storeInfo;
