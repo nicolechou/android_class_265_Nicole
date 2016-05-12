@@ -1,6 +1,9 @@
 package com.example.user.simpleui;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -11,6 +14,10 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.security.PublicKey;
 
 public class OrderDetailActiity extends AppCompatActivity {
 
@@ -24,10 +31,10 @@ public class OrderDetailActiity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_detail_actiity);
 
-        note = (TextView)findViewById(R.id.note);
-        storeInfo = (TextView)findViewById(R.id.storeInfo);
-        menuResults = (TextView)findViewById(R.id.menuResults);
-        photo = (ImageView)findViewById(R.id.phtoImageView);
+        note = (TextView) findViewById(R.id.note);
+        storeInfo = (TextView) findViewById(R.id.storeInfo);
+        menuResults = (TextView) findViewById(R.id.menuResults);
+        photo = (ImageView) findViewById(R.id.phtoImageView);
 
         Intent intent = getIntent();
         note.setText(intent.getStringExtra("note"));
@@ -38,10 +45,9 @@ public class OrderDetailActiity extends AppCompatActivity {
         String text = "";
         try {
             JSONArray jsonArray = new JSONArray(results);
-            for (int i = 0 ;i <jsonArray.length(); i++)
-            {
+            for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject object = jsonArray.getJSONObject(i);
-                text += object.getString("name")+ " : 大杯" + object.getString("l")+ "杯  中杯" + object.getString("m") +"杯" + "\n";
+                text += object.getString("name") + " : 大杯" + object.getString("l") + "杯  中杯" + object.getString("m") + "杯" + "\n";
 
             }
         } catch (JSONException e) {
@@ -50,14 +56,65 @@ public class OrderDetailActiity extends AppCompatActivity {
 
         menuResults.setText(text);
 
+        menuResults.setText(text);
+
         String url = intent.getStringExtra("photoURL");
+
         if (!url.equals(""))
         {
-            Picasso.with(this).load(url).into(photo);
+//            Picasso.with(this).load(url).into(photo);
+//            (new ImageLoadingTask(photo)).execute(url);
+            (new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
         }
+        (new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
 
+//        menuResults.setText(intent.getStringExtra("menuResults"));
 
     }
 
+    private static class GeoCodingTask extends AsyncTask<String, Void, Bitmap>
+    {
+        ImageView imageView;
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            String address = params[0];
+            double[] latlng = Utils.addressToLatLng(address);
+            return Utils.getStaticMap(latlng);
+        }
 
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            imageView.setImageBitmap(bitmap);
+        }
+
+        public GeoCodingTask(ImageView imageView){this.imageView = imageView;}
+    }
+
+    private static class ImageLoadingTask extends AsyncTask<String, Void, Bitmap>
+    {
+        ImageView imageView;
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            String url = params[0];
+            byte[] bytes = Utils.urlToBytes(url);
+            if (bytes!= null) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                return bitmap;
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            if (bitmap != null)
+            {
+                imageView.setImageBitmap(bitmap);
+            }
+        }
+
+        public ImageLoadingTask(ImageView imageView){this.imageView = imageView;}
+    }
 }
