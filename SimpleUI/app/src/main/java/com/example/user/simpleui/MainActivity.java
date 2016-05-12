@@ -195,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Order order = (Order) parent.getAdapter().getItem(position);
+                goToDetailOrder(order);
                 Snackbar.make(view, order.getNote(), Snackbar.LENGTH_SHORT).show();
             }
         });
@@ -257,6 +258,10 @@ public class MainActivity extends AppCompatActivity {
                     order.setNote(objects.get(i).getString("note"));
                     order.setStoreInfo(objects.get(i).getString("storeInfo"));
                     order.setMenuResults(objects.get(i).getString("menuResults"));
+                    if (objects.get(i).getParseFile("photo") !=null)
+                    {
+                        order.photoURL = objects.get(i).getParseFile("photo").getUrl();
+                    }
                     orders.add(order);
 
                     if(results.size() <= i)
@@ -284,11 +289,11 @@ public class MainActivity extends AppCompatActivity {
             public void done(List<ParseObject> list, ParseException e) {
                 if (e == null) {
                     ArrayList<String> nameList = new ArrayList<>();
-                    for(ParseObject object : list) {
+                    for (ParseObject object : list) {
                         nameList.add(object.getString("name"));
                     }
                     ArrayAdapter adapter = new ArrayAdapter(
-                            getApplicationContext(),android.R.layout.simple_list_item_1 ,nameList);
+                            getApplicationContext(), android.R.layout.simple_list_item_1, nameList);
                     storeName.setAdapter(adapter);
                 } else {
 
@@ -383,6 +388,20 @@ public class MainActivity extends AppCompatActivity {
         intent.setClass(this, DrinkMenuActivity.class);
 
         startActivityForResult(intent, REQUEST_CODE_MENU_ACTIVITY);
+    }
+
+    public void goToDetailOrder(Order order)
+    {
+        Intent intent = new Intent();
+
+        intent.setClass(this, OrderDetailActiity.class);
+
+        intent.putExtra("note", order.getNote());
+        intent.putExtra("storeInfo", order.getStoreInfo());
+        intent.putExtra("menuResults", order.getMenuResults());
+        intent.putExtra("photoURL", order.photoURL);
+        startActivity(intent);
+
     }
 
     @Override

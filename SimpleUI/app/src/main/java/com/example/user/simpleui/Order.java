@@ -16,7 +16,7 @@ Order extends RealmObject{
     private String storeInfo;
 
     byte[] photo = null;
-
+    String photoURL = "";
 
     public String getNote() {
         return note;
