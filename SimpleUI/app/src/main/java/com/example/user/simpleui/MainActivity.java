@@ -1,5 +1,6 @@
 package com.example.user.simpleui;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
     Spinner spinner;
     int def;
     ProgressBar progressBar;
+    ProgressDialog progressDialog;
     ImageView photoImageView;
 
 
@@ -116,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         spinner = (Spinner) findViewById(R.id.spinner);
         progressBar = (ProgressBar)findViewById(R.id.progressBar);
         photoImageView = (ImageView)findViewById(R.id.imageView);
+        progressDialog = new ProgressDialog(this);
         orders = new ArrayList<>();
 
 
@@ -300,6 +303,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void click(View view) {
+        progressDialog.setTitle("Load....");
+        progressDialog.show();
         note = editText.getText().toString();
         String text = note;
         textView.setText(text);
@@ -341,6 +346,9 @@ public class MainActivity extends AppCompatActivity {
                 menuResults = "";
                 photoImageView.setImageResource(0);
                 hasPhoto = false;
+
+                progressDialog.dismiss();
+
                 setupListView();
             }
         });
