@@ -25,6 +25,11 @@ public class OrderDetailActiity extends AppCompatActivity {
     TextView storeInfo;
     TextView menuResults;
     ImageView photo;
+    ImageView mapImageView;
+
+    String storeName;
+    String address;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,12 +39,17 @@ public class OrderDetailActiity extends AppCompatActivity {
         note = (TextView) findViewById(R.id.note);
         storeInfo = (TextView) findViewById(R.id.storeInfo);
         menuResults = (TextView) findViewById(R.id.menuResults);
-        photo = (ImageView) findViewById(R.id.phtoImageView);
+        //photo = (ImageView) findViewById(R.id.photoImageView);
+        mapImageView = (ImageView) findViewById(R.id.mapImageView);
 
         Intent intent = getIntent();
         note.setText(intent.getStringExtra("note"));
         storeInfo.setText(intent.getStringExtra("storeInfo"));
         //menuResults.setText(intent.getStringExtra("menuResults"));
+
+        String[] info = intent.getStringExtra("storeInfo").split(",");
+        storeName = info[0];
+       address = info[1];
 
         String results = intent.getStringExtra("menuResults");
         String text = "";
@@ -63,10 +73,11 @@ public class OrderDetailActiity extends AppCompatActivity {
         if (!url.equals(""))
         {
 //            Picasso.with(this).load(url).into(photo);
-//            (new ImageLoadingTask(photo)).execute(url);
-            (new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
+            (new ImageLoadingTask(photo)).execute(url);
+            //(new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
         }
-        (new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
+        //(new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
+        (new GeoCodingTask(mapImageView)).execute(address);
 
 //        menuResults.setText(intent.getStringExtra("menuResults"));
 

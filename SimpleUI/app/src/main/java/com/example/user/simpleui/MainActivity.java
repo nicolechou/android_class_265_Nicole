@@ -281,25 +281,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    void setupSpinner() {
-        final Spinner storeName = (Spinner) findViewById(R.id.spinner);
+    void  setupSpinner()
+    {
         ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("StoreInfo");
         query.findInBackground(new FindCallback<ParseObject>() {
             @Override
-            public void done(List<ParseObject> list, ParseException e) {
-                if (e == null) {
-                    ArrayList<String> nameList = new ArrayList<>();
-                    for (ParseObject object : list) {
-                        nameList.add(object.getString("name"));
-                    }
-                    ArrayAdapter adapter = new ArrayAdapter(
-                            getApplicationContext(), android.R.layout.simple_list_item_1, nameList);
-                    storeName.setAdapter(adapter);
-                } else {
+            public void done(List<ParseObject> objects, ParseException e) {
+                if(e != null || objects == null)
+                    return;
 
+                String[] storeInfo = new String[objects.size()];
+                for (int i = 0; i < objects.size(); i++)
+                {
+                    ParseObject object = objects.get(i);
+                    storeInfo[i] = object.getString("name")+","+object.getString("address");
                 }
-            }
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, storeInfo);
 
+                spinner.setAdapter(adapter);
+            }
         });
 
 //        String[] data = getResources().getStringArray(query.get(Objects.toString("name")));
