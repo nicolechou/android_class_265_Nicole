@@ -3,12 +3,26 @@ package com.example.user.simpleui;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -18,6 +32,7 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.PublicKey;
+import java.util.ArrayList;
 
 public class OrderDetailActiity extends AppCompatActivity {
 
@@ -29,6 +44,8 @@ public class OrderDetailActiity extends AppCompatActivity {
 
     String storeName;
     String address;
+
+    MapFragment mapFragment;
 
 
     @Override
@@ -77,29 +94,94 @@ public class OrderDetailActiity extends AppCompatActivity {
             //(new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
         }
         //(new GeoCodingTask(photo)).execute("台北市羅斯福路四段一號");
-        (new GeoCodingTask(mapImageView)).execute(address);
+       //(new GeoCodingTask(mapImageView)).execute(address);
+        mapFragment = (MapFragment)getFragmentManager().findFragmentById(R.id.googleMapFragment);
+
+        mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                (new GeoCodingTask(googleMap)).execute(address);
+            }
+        });
+
 
 //        menuResults.setText(intent.getStringExtra("menuResults"));
 
     }
 
-    private static class GeoCodingTask extends AsyncTask<String, Void, Bitmap>
+    private static class GeoCodingTask extends AsyncTask<String, Void, double[]>
     {
-        ImageView imageView;
+        //ImageView imageView;
+        GoogleMap googleMap;
+        private ArrayList<Polyline> polylines;
+
         @Override
-        protected Bitmap doInBackground(String... params) {
+        protected double[] doInBackground(String... params) {
             String address = params[0];
             double[] latlng = Utils.addressToLatLng(address);
-            return Utils.getStaticMap(latlng);
+            //return Utils.getStaticMap(latlng);
+            return  latlng;
         }
 
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
-            imageView.setImageBitmap(bitmap);
+        protected void onPostExecute(double[] latlng) {
+            LatLng storeLocation = new LatLng(latlng[0], latlng[1]);
+            //super.onPostExecute(bitmap);
+            //imageView.setImageBitmap(bitmap);
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(storeLocation, 17));
+            googleMap.addMarker(new MarkerOptions().position(storeLocation));
+
+            LatLng start = new LatLng(25.0186348,121.5398379);
+            Routing routing = new Routing.Builder()
+                    .travelMode(AbstractRouting.TravelMode.WALKING)
+                    .waypoints(start, storeLocation)
+                    .withListener(new RoutingListener() {
+                        @Override
+                        public void onRoutingFailure(RouteException e) {
+
+                        }
+
+                        @Override
+                        public void onRoutingStart() {
+
+                        }
+
+                        @Override
+                        public void onRoutingSuccess(ArrayList<Route> routes, int index) {
+                            if(polylines != null) {
+                                for (Polyline poly : polylines) {
+                                    poly.remove();
+                                }
+                            }
+
+                            polylines = new ArrayList<>();
+                            //add route(s) to the map.
+                            for (int i = 0; i <routes.size(); i++) {
+
+                                //In case of more than 5 alternative routes
+                                //多邊的圖型
+                                PolylineOptions polyOptions = new PolylineOptions();
+                                polyOptions.color(Color.RED); //顏色設定
+                                polyOptions.width(10 + i * 3);  //寬度設定
+                                polyOptions.addAll(routes.get(i).getPoints());
+                                Polyline polyline = googleMap.addPolyline(polyOptions);
+                                polylines.add(polyline);
+
+//            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ routes.get(i).getDistanceValue()+": duration - "+ routes.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+                            }
+
+                        }
+
+                        @Override
+                        public void onRoutingCancelled() {
+
+                        }
+                    }).build();
+            routing.execute();
+
         }
 
-        public GeoCodingTask(ImageView imageView){this.imageView = imageView;}
+        public GeoCodingTask(GoogleMap googleMap){this.googleMap = googleMap;}
     }
 
     private static class ImageLoadingTask extends AsyncTask<String, Void, Bitmap>
